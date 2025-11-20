@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Routes, Route, Link, useLocation, Navigate, useParams, useNavigate } from 'react-router-dom'
-import { Menu, LogOut, LogIn, PlusCircle, Search, TrendingUp, MessageSquare, Shield, Settings, BadgeDollarSign, Video, Bell, CreditCard, Trash2, Check, FileText } from 'lucide-react'
+import { Menu, LogOut, LogIn, PlusCircle, Search, TrendingUp, MessageSquare, Shield, Settings, BadgeDollarSign, Video, Bell, FileText } from 'lucide-react'
 
 // Utils
 const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
@@ -122,48 +122,19 @@ function Navbar({ user, onLogout }) {
   )
 }
 
-function AgeGate() {
-  const [age, setAge] = useState(18)
-  const [role, setRole] = useState('investor')
-  const [visible, setVisible] = useState(() => !localStorage.getItem('invested:age_verified'))
-  if (!visible) return null
-
-  const canEnter = role === 'investor' ? age >= 18 : age >= 3
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-gradient-to-b from-slate-900 to-black border border-blue-900/50 rounded-2xl p-6 text-white shadow-2xl">
-        <h3 className="text-2xl font-semibold mb-2">Age Verification</h3>
-        <p className="text-blue-200/80 mb-6">Confirm your age to continue. Investors must be 18+.</p>
-        <div className="flex gap-3 mb-4">
-          <AButton onClick={()=>setRole('learner')} variant={role==='learner'?'primary':'outline'} className="flex-1 py-2">I want to learn</AButton>
-          <AButton onClick={()=>setRole('investor')} variant={role==='investor'?'primary':'outline'} className="flex-1 py-2">I want to invest</AButton>
-        </div>
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-sm opacity-80">Age: {age}</span>
-          <span className="text-xs opacity-60">Slide to set</span>
-        </div>
-        <input type="range" min="3" max="100" value={age} onChange={(e)=>setAge(parseInt(e.target.value))} className="w-full accent-white"/>
-        <p className={`mt-3 text-sm ${canEnter? 'text-green-400':'text-red-400'}`}>{canEnter? 'Access granted' : 'Unable to invest — must be 18+'}</p>
-        <div className="mt-6 flex justify-end gap-3">
-          <AButton onClick={()=>setVisible(false)} variant="outline" className="px-4 py-2">Close</AButton>
-          <AButton disabled={!canEnter} onClick={()=>{localStorage.setItem('invested:age_verified','1'); setVisible(false)}} className="px-4 py-2">Enter</AButton>
-        </div>
-        <div className="mt-3 text-xs text-blue-200/70 text-center">
-          Complete this step to unlock all actions.
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function Hero() {
   return (
     <section className="relative sm:min-h-[70vh] flex items-center overflow-hidden">
-      {/* Decorative background shapes with no pointer events */}
+      {/* Moving background (animated gradient + floating orbs) */}
+      <style>{`
+        @keyframes gradientShift { 0%{ transform: translate3d(0,0,0) scale(1);} 50%{ transform: translate3d(10%, -5%, 0) scale(1.1);} 100%{ transform: translate3d(0,0,0) scale(1);} }
+        @keyframes floaty { 0%{ transform: translateY(0) } 50%{ transform: translateY(-20px) } 100%{ transform: translateY(0) } }
+      `}</style>
       <div className="absolute inset-0 -z-10 pointer-events-none">
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-600/20 blur-3xl rounded-full"></div>
-        <div className="absolute -bottom-24 -left-24 w-[28rem] h-[28rem] bg-indigo-500/20 blur-3xl rounded-full"></div>
+        <div className="absolute -top-32 -right-24 w-[36rem] h-[36rem] rounded-full blur-3xl" style={{ background:'radial-gradient(circle at 30% 30%, rgba(59,130,246,0.35), transparent 60%)', animation:'gradientShift 12s ease-in-out infinite' }}></div>
+        <div className="absolute -bottom-32 -left-24 w-[32rem] h-[32rem] rounded-full blur-3xl" style={{ background:'radial-gradient(circle at 70% 70%, rgba(99,102,241,0.35), transparent 60%)', animation:'gradientShift 14s ease-in-out infinite reverse' }}></div>
+        <div className="absolute left-1/3 top-10 w-40 h-40 rounded-full bg-blue-500/20 blur-xl" style={{ animation:'floaty 8s ease-in-out infinite' }}></div>
+        <div className="absolute right-1/4 bottom-10 w-28 h-28 rounded-full bg-cyan-400/20 blur-xl" style={{ animation:'floaty 10s ease-in-out infinite 1s' }}></div>
       </div>
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-24 text-white">
         <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight mb-4">Invest in Human Potential</h1>
@@ -199,7 +170,7 @@ function Home() {
 function AuthPage({ auth }) {
   const [isLogin, setIsLogin] = useState(true)
   const [error, setError] = useState('')
-  const [form, setForm] = useState({ name:'', email:'', password:'', role:'investor', age:18 })
+  const [form, setForm] = useState({ name:'', email:'', password:'', role:'investor' })
   const submit = async (e)=>{
     e.preventDefault(); setError('')
     try{
@@ -218,18 +189,12 @@ function AuthPage({ auth }) {
               <label className="text-sm opacity-80">Full name</label>
               <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2" required/>
             </div>
-            <div className="mb-3 grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm opacity-80">Role</label>
-                <select value={form.role} onChange={e=>setForm({...form,role:e.target.value})} className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2">
-                  <option value="learner">Learner</option>
-                  <option value="investor">Investor</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm opacity-80">Age: {form.age}</label>
-                <input type="range" min="3" max="100" value={form.age} onChange={e=>setForm({...form,age:parseInt(e.target.value)})} className="mt-2 w-full accent-white"/>
-              </div>
+            <div className="mb-3">
+              <label className="text-sm opacity-80">Role</label>
+              <select value={form.role} onChange={e=>setForm({...form,role:e.target.value})} className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2">
+                <option value="learner">Learner</option>
+                <option value="investor">Investor</option>
+              </select>
             </div>
           </>
         )}
@@ -359,7 +324,7 @@ function InvestModal({ learner, onClose, user, onDone }) {
 }
 
 function ApplyPage({ user }) {
-  const [form, setForm] = useState({ user_id: user?.id || '', name:'', age:18, skills:'', field_of_study:'', project_description:'', requested_funding:1000, investment_terms:'', return_model:'ISA', payment_setup_done:false })
+  const [form, setForm] = useState({ user_id: user?.id || '', name:'', skills:'', field_of_study:'', project_description:'', requested_funding:1000, investment_terms:'', return_model:'ISA' })
   const [msg, setMsg] = useState('')
   useEffect(()=>{ setForm(f=>({...f,user_id:user?.id||''})) },[user])
   const submit = async (e)=>{
@@ -381,16 +346,6 @@ function ApplyPage({ user }) {
               <input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
             </div>
             <div>
-              <label className="text-sm opacity-80">Age: {form.age}</label>
-              <input type="range" min="3" max="100" value={form.age} onChange={e=>setForm({...form,age:parseInt(e.target.value)})} className="mt-2 w-full accent-white"/>
-            </div>
-          </div>
-          <div>
-            <label className="text-sm opacity-80">Skills (comma separated)</label>
-            <input value={form.skills} onChange={e=>setForm({...form,skills:e.target.value})} className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
               <label className="text-sm opacity-80">Field of study</label>
               <select value={form.field_of_study} onChange={e=>setForm({...form,field_of_study:e.target.value})} className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2">
                 {['Art','Business','Computer Science','Design','Education','Engineering','Finance','Health','Law','Marketing','Science','Other'].sort((a,b)=>a.localeCompare(b)).map(opt=> (
@@ -398,12 +353,16 @@ function ApplyPage({ user }) {
                 ))}
               </select>
             </div>
-            {form.field_of_study==='Other' && (
-              <div>
-                <label className="text-sm opacity-80">Specify field</label>
-                <input value={form.other_field||''} onChange={e=>setForm({...form,other_field:e.target.value})} className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
-              </div>
-            )}
+          </div>
+          {form.field_of_study==='Other' && (
+            <div>
+              <label className="text-sm opacity-80">Specify field</label>
+              <input value={form.other_field||''} onChange={e=>setForm({...form,other_field:e.target.value})} className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
+            </div>
+          )}
+          <div>
+            <label className="text-sm opacity-80">Skills (comma separated)</label>
+            <input value={form.skills} onChange={e=>setForm({...form,skills:e.target.value})} className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
           </div>
           <div>
             <label className="text-sm opacity-80">Project description</label>
@@ -428,10 +387,6 @@ function ApplyPage({ user }) {
             <label className="text-sm opacity-80">Investment terms</label>
             <textarea rows={3} value={form.investment_terms} onChange={e=>setForm({...form,investment_terms:e.target.value})} className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
           </div>
-          <div className="flex items-center gap-2">
-            <input id="payment" type="checkbox" checked={form.payment_setup_done} onChange={e=>setForm({...form,payment_setup_done:e.target.checked})}/>
-            <label htmlFor="payment" className="text-sm">I set up my payment method</label>
-          </div>
           {msg && <div className="text-sm text-blue-200/90">{msg}</div>}
           <AButton type="submit" className="px-5 py-3">Submit</AButton>
         </form>
@@ -455,7 +410,7 @@ function Dashboard({ user }) {
     <div className="min-h-[70vh] bg-black text-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <h2 className="text-2xl font-semibold mb-2">Investor Dashboard</h2>
-        <p className="text-blue-200/80 mb-6">Track performance and upcoming payments.</p>
+        <p className="text-blue-200/80 mb-6">Track performance and updates.</p>
         {!user && <div className="text-blue-200/80">Please log in to view your portfolio.</div>}
         {user && summary && (
           <div className="grid sm:grid-cols-3 gap-4 mb-8">
@@ -468,8 +423,8 @@ function Dashboard({ user }) {
               <div className="text-2xl font-semibold">${summary.roi.toFixed(2)}</div>
             </div>
             <div className="rounded-2xl border border-blue-900/50 p-5 bg-gradient-to-b from-slate-900 to-black">
-              <div className="text-sm opacity-80 mb-1">Upcoming Payments</div>
-              <div className="text-2xl font-semibold">${summary.upcoming_payments.toFixed(2)}</div>
+              <div className="text-sm opacity-80 mb-1">Active Investments</div>
+              <div className="text-2xl font-semibold">{summary.active_investments}</div>
             </div>
           </div>
         )}
@@ -621,8 +576,8 @@ function Privacy() {
     <div className="bg-black text-white">
       <div className="max-w-3xl mx-auto px-4 py-16">
         <h2 className="text-3xl font-semibold mb-6">Privacy Policy</h2>
-        <Item id="p1" title="Data We Collect">Account details, KYC metadata, and usage analytics.</Item>
-        <Item id="p2" title="How We Use Data">To facilitate funding, prevent fraud, and improve recommendations.</Item>
+        <Item id="p1" title="Data We Collect">Account details and usage analytics.</Item>
+        <Item id="p2" title="How We Use Data">To facilitate funding and improve recommendations.</Item>
         <Item id="p3" title="Your Choices">Export or delete your account anytime in Settings.</Item>
       </div>
     </div>
@@ -655,31 +610,11 @@ function Demo() {
 function SettingsPage() {
   const user = JSON.parse(localStorage.getItem('invested:user')||'null')
   const [docs, setDocs] = useState([{ type:'passport', url:'' }])
-  const [methods, setMethods] = useState([])
-  const [newPM, setNewPM] = useState({ type:'card', details:{ number:'', brand:'', last4:'' }})
-
-  const loadPM = async()=>{
-    if(!user) return
-    const r = await fetch(`${API_BASE}/payments/methods/${user.id}`)
-    if(r.ok){ const d = await r.json(); setMethods(d.payment_methods) }
-  }
-  useEffect(()=>{ loadPM() },[])
 
   const submitKYC = async()=>{
     if(!user){ alert('Login required'); return }
     const r = await fetch(`${API_BASE}/kyc/submit/${user.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ documents: docs }) })
     if(r.ok) alert('KYC submitted')
-  }
-  const addMethod = async()=>{
-    if(!user){ alert('Login required'); return }
-    const r = await fetch(`${API_BASE}/payments/methods`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ user_id: user.id, ...newPM }) })
-    if(r.ok){ setNewPM({ type:'card', details:{ number:'', brand:'', last4:'' }}); loadPM() }
-  }
-  const confirmPM = async(id)=>{
-    await fetch(`${API_BASE}/payments/methods/confirm/${id}`, { method:'POST' }); loadPM()
-  }
-  const deletePM = async(id)=>{
-    await fetch(`${API_BASE}/payments/methods/${id}`, { method:'DELETE' }); loadPM()
   }
 
   return (
@@ -703,33 +638,6 @@ function SettingsPage() {
               <AButton onClick={()=>setDocs(d=>[...d,{ type:'passport', url:'' }])} variant="outline" className="px-3 py-2">Add Document</AButton>
               <AButton onClick={submitKYC} className="px-3 py-2">Submit KYC</AButton>
             </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-blue-900/50 p-5 bg-gradient-to-b from-slate-900 to-black">
-          <div className="flex items-center gap-2 mb-3"><CreditCard size={18} className="text-blue-400"/><h3 className="font-semibold">Payment Methods</h3></div>
-          <div className="grid sm:grid-cols-3 gap-3 mb-3">
-            <select value={newPM.type} onChange={e=>setNewPM(pm=>({...pm, type:e.target.value}))} className="bg-black border border-blue-900/60 rounded-lg px-3 py-2">
-              <option value="card">Card</option>
-              <option value="bank">Bank</option>
-              <option value="digital">Digital</option>
-            </select>
-            <input value={newPM.details.brand||''} onChange={e=>setNewPM(pm=>({...pm, details:{...pm.details, brand:e.target.value}}))} placeholder="Brand/Bank" className="bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
-            <input value={newPM.details.last4||''} onChange={e=>setNewPM(pm=>({...pm, details:{...pm.details, last4:e.target.value}}))} placeholder="Last4/Hint" className="bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
-          </div>
-          <AButton onClick={addMethod} className="px-3 py-2">Add</AButton>
-          <div className="mt-4 space-y-2">
-            {methods.map(m=> (
-              <div key={m.id} className="flex items-center gap-3 border border-blue-900/50 rounded-xl p-3">
-                <div className="flex-1">
-                  <div className="text-white/90 text-sm">{m.type.toUpperCase()} • {(m.details?.brand||'')}{m.details?.last4? ` • ${m.details.last4}`:''}</div>
-                  <div className="text-xs text-blue-200/70">{m.confirmed? 'Confirmed':'Unconfirmed'}</div>
-                </div>
-                {!m.confirmed && <AButton onClick={()=>confirmPM(m.id)} variant="outline" className="px-2 py-1 text-xs"><Check size={14}/>Confirm</AButton>}
-                <AButton onClick={()=>deletePM(m.id)} variant="outline" className="px-2 py-1 text-xs text-red-300"><Trash2 size={14}/>Delete</AButton>
-              </div>
-            ))}
-            {methods.length===0 && <div className="text-sm text-blue-200/70">No payment methods yet.</div>}
           </div>
         </div>
       </div>
@@ -798,12 +706,7 @@ function Profile(){
             <div className="font-semibold mb-2">Role</div>
             <div className="text-blue-200/80 capitalize">{user.role}</div>
           </div>
-          <div className="rounded-2xl border border-blue-900/50 p-5 bg-gradient-to-b from-slate-900 to-black">
-            <div className="font-semibold mb-2">Age</div>
-            <div className="text-blue-200/80">{user.age}</div>
-          </div>
         </div>
-        <div className="mt-6 text-sm text-blue-200/70">Manage payment methods and KYC in Settings.</div>
       </div>
     </div>
   )
@@ -813,7 +716,6 @@ export default function App(){
   const auth = useAuth()
   return (
     <div className="min-h-screen bg-black">
-      <AgeGate />
       <Navbar user={auth.user} onLogout={auth.logout} />
       <ResetScroll />
       <Routes>
