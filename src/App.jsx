@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Routes, Route, Link, useLocation, Navigate, useParams, useNavigate } from 'react-router-dom'
-import { Menu, User, LogOut, LogIn, PlusCircle, Search, TrendingUp, MessageSquare, Shield, Settings, BadgeDollarSign, Video, Bell, CreditCard, Trash2, Check, FileText } from 'lucide-react'
-import Spline from '@splinetool/react-spline'
+import { Menu, LogOut, LogIn, PlusCircle, Search, TrendingUp, MessageSquare, Shield, Settings, BadgeDollarSign, Video, Bell, CreditCard, Trash2, Check, FileText } from 'lucide-react'
 
 // Utils
 const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
@@ -51,7 +50,6 @@ function LetterAvatar({ name, size = 36 }) {
 }
 
 function MoneyHandLogo({ size=36 }){
-  // Simple hand with money SVG
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow">
       <rect x="2" y="10" width="36" height="24" rx="4" fill="#1e40af" stroke="#60a5fa" strokeWidth="2"/>
@@ -64,10 +62,23 @@ function MoneyHandLogo({ size=36 }){
   )
 }
 
+// Accessible, consistent button component
+function AButton({ children, variant='primary', className='', ...props }){
+  const base = 'inline-flex items-center justify-center rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed transition-colors'
+  const styles = {
+    primary: 'bg-white text-black hover:bg-slate-200',
+    outline: 'border border-blue-900/60 hover:border-blue-700/80',
+    ghost: 'hover:bg-blue-900/30',
+  }
+  return (
+    <button type={props.type || 'button'} {...props} className={`${base} ${styles[variant]} ${className}`}>{children}</button>
+  )
+}
+
 function Navbar({ user, onLogout }) {
   const [open, setOpen] = useState(false)
   return (
-    <header className="sticky top-0 z-50 backdrop-blur bg-black/50 border-b border-blue-900/40">
+    <header className="sticky top-0 z-40 backdrop-blur bg-black/60 border-b border-blue-900/40">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between text-white">
         <Link to="/" className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-700/10 border border-blue-400/30 shadow-inner flex items-center justify-center">
@@ -86,7 +97,7 @@ function Navbar({ user, onLogout }) {
           {user ? (
             <div className="flex items-center gap-3">
               <Link to="/settings" className="p-2 rounded-lg hover:bg-blue-900/30"><Settings size={18}/></Link>
-              <button onClick={onLogout} className="px-3 py-1.5 rounded-md bg-white text-black text-sm flex items-center gap-2"><LogOut size={16}/>Logout</button>
+              <AButton onClick={onLogout} className="px-3 py-1.5"><LogOut size={16}/> <span className="ml-1">Logout</span></AButton>
               <Link to="/profile" className="flex items-center gap-2">
                 <LetterAvatar name={user.name} />
                 <span className="hidden sm:block text-sm opacity-80">{user.name}</span>
@@ -95,7 +106,7 @@ function Navbar({ user, onLogout }) {
           ) : (
             <Link to="/auth" className="px-3 py-1.5 rounded-md bg-white text-black text-sm flex items-center gap-2"><LogIn size={16}/>Login</Link>
           )}
-          <button className="md:hidden p-2" onClick={() => setOpen(v=>!v)}><Menu/></button>
+          <AButton className="md:hidden p-2" variant="ghost" onClick={() => setOpen(v=>!v)} aria-expanded={open} aria-label="Menu"><Menu/></AButton>
         </div>
       </div>
       {open && (
@@ -120,26 +131,26 @@ function AgeGate() {
   const canEnter = role === 'investor' ? age >= 18 : age >= 3
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
       <div className="w-full max-w-lg bg-gradient-to-b from-slate-900 to-black border border-blue-900/50 rounded-2xl p-6 text-white shadow-2xl">
         <h3 className="text-2xl font-semibold mb-2">Age Verification</h3>
         <p className="text-blue-200/80 mb-6">Confirm your age to continue. Investors must be 18+.</p>
         <div className="flex gap-3 mb-4">
-          <button onClick={()=>setRole('learner')} className={`flex-1 py-2 rounded-lg border ${role==='learner'?'bg-blue-600 text-white border-blue-500':'border-blue-900/60 bg-slate-900'}`}>I want to learn</button>
-          <button onClick={()=>setRole('investor')} className={`flex-1 py-2 rounded-lg border ${role==='investor'?'bg-blue-600 text-white border-blue-500':'border-blue-900/60 bg-slate-900'}`}>I want to invest</button>
+          <AButton onClick={()=>setRole('learner')} variant={role==='learner'?'primary':'outline'} className="flex-1 py-2">I want to learn</AButton>
+          <AButton onClick={()=>setRole('investor')} variant={role==='investor'?'primary':'outline'} className="flex-1 py-2">I want to invest</AButton>
         </div>
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm opacity-80">Age: {age}</span>
           <span className="text-xs opacity-60">Slide to set</span>
         </div>
-        <input type="range" min="3" max="100" value={age} onChange={(e)=>setAge(parseInt(e.target.value))} className="w-full accent-white" style={{ filter:'drop-shadow(0 0 2px black)'}}/>
+        <input type="range" min="3" max="100" value={age} onChange={(e)=>setAge(parseInt(e.target.value))} className="w-full accent-white"/>
         <p className={`mt-3 text-sm ${canEnter? 'text-green-400':'text-red-400'}`}>{canEnter? 'Access granted' : 'Unable to invest — must be 18+'}</p>
         <div className="mt-6 flex justify-end gap-3">
-          <button onClick={()=>setVisible(false)} className="px-4 py-2 rounded-md border border-blue-900/60">Close</button>
-          <button disabled={!canEnter} onClick={()=>{localStorage.setItem('invested:age_verified','1'); setVisible(false)}} className={`px-4 py-2 rounded-md ${canEnter? 'bg-white text-black':'bg-gray-600 text-gray-300 cursor-not-allowed'}`}>Enter</button>
+          <AButton onClick={()=>setVisible(false)} variant="outline" className="px-4 py-2">Close</AButton>
+          <AButton disabled={!canEnter} onClick={()=>{localStorage.setItem('invested:age_verified','1'); setVisible(false)}} className="px-4 py-2">Enter</AButton>
         </div>
         <div className="mt-3 text-xs text-blue-200/70 text-center">
-          Having trouble clicking elsewhere? Complete this check to unlock the app.
+          Complete this step to unlock all actions.
         </div>
       </div>
     </div>
@@ -148,9 +159,11 @@ function AgeGate() {
 
 function Hero() {
   return (
-    <section className="relative min-h[80vh] sm:min-h-[80vh] flex items-center">
-      <div className="absolute inset-0 pointer-events-none">
-        <Spline scene="https://prod.spline.design/41MGRk-UDPKO-l6W/scene.splinecode" style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
+    <section className="relative sm:min-h-[70vh] flex items-center overflow-hidden">
+      {/* Decorative background shapes with no pointer events */}
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-600/20 blur-3xl rounded-full"></div>
+        <div className="absolute -bottom-24 -left-24 w-[28rem] h-[28rem] bg-indigo-500/20 blur-3xl rounded-full"></div>
       </div>
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-24 text-white">
         <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight mb-4">Invest in Human Potential</h1>
@@ -229,8 +242,8 @@ function AuthPage({ auth }) {
           <input type="password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2" required/>
         </div>
         {error && <div className="mb-3 text-red-400 text-sm">{error}</div>}
-        <button className="w-full py-2 rounded-lg bg-white text-black font-medium">{isLogin? 'Login' : 'Create Account'}</button>
-        <button type="button" onClick={()=>setIsLogin(v=>!v)} className="mt-3 w-full py-2 rounded-lg border border-blue-900/60">{isLogin? 'Create new account' : 'I already have an account'}</button>
+        <AButton type="submit" className="w-full py-2">{isLogin? 'Login' : 'Create Account'}</AButton>
+        <AButton type="button" onClick={()=>setIsLogin(v=>!v)} variant="outline" className="mt-3 w-full py-2">{isLogin? 'Create new account' : 'I already have an account'}</AButton>
       </form>
     </div>
   )
@@ -253,7 +266,7 @@ function ExplorePage({ user }) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/70" size={18}/>
             <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search learners, skills" className="w-full bg-black border border-blue-900/60 rounded-lg pl-9 pr-3 py-2"/>
           </div>
-          <button onClick={load} className="px-4 py-2 rounded-lg bg-white text-black">Search</button>
+          <AButton onClick={load} className="px-4 py-2">Search</AButton>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {list.map(l=>{
@@ -279,7 +292,7 @@ function ExplorePage({ user }) {
                   </div>
                 </div>
                 <div className="mt-auto flex gap-2">
-                  <button onClick={()=>setSelected(l)} className="flex-1 py-2 rounded-lg bg-white text-black">Invest Now</button>
+                  <AButton onClick={()=>setSelected(l)} className="flex-1 py-2">Invest Now</AButton>
                   <Link to={`/learner/${l.id}`} className="px-4 py-2 rounded-lg border border-blue-900/60">Review</Link>
                 </div>
               </div>
@@ -306,7 +319,7 @@ function InvestModal({ learner, onClose, user, onDone }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[70] bg-black/70 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-2xl border border-blue-900/60 bg-gradient-to-b from-slate-900 to-black p-6 text-white">
         <h3 className="text-xl font-semibold mb-2">Invest in {learner.name}</h3>
         <p className="text-sm text-blue-200/80 mb-4">Choose amount and model. This action cannot be undone.</p>
@@ -324,19 +337,19 @@ function InvestModal({ learner, onClose, user, onDone }) {
           </select>
         </div>
         <div className="flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg border border-blue-900/60">Cancel</button>
-          <button onClick={()=>setConfirming(true)} className="px-4 py-2 rounded-lg bg-white text-black">Review & Confirm</button>
+          <AButton onClick={onClose} variant="outline" className="px-4 py-2">Cancel</AButton>
+          <AButton onClick={()=>setConfirming(true)} className="px-4 py-2">Review & Confirm</AButton>
         </div>
       </div>
       {confirming && (
-        <div className="fixed inset-0 z-[80] bg-black/70 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
           <div className="w-full max-w-sm rounded-2xl border border-blue-900/60 bg-gradient-to-b from-slate-900 to-black p-6 text-white text-center">
             <Shield className="mx-auto mb-3 text-blue-400"/>
             <h4 className="font-semibold mb-2">Are you sure?</h4>
             <p className="text-sm text-blue-200/80 mb-4">This cannot be undone.</p>
             <div className="flex justify-center gap-3">
-              <button onClick={()=>setConfirming(false)} className="px-4 py-2 rounded-lg border border-blue-900/60">Back</button>
-              <button onClick={submit} className="px-4 py-2 rounded-lg bg-white text-black">Confirm</button>
+              <AButton onClick={()=>setConfirming(false)} variant="outline" className="px-4 py-2">Back</AButton>
+              <AButton onClick={submit} className="px-4 py-2">Confirm</AButton>
             </div>
           </div>
         </div>
@@ -420,7 +433,7 @@ function ApplyPage({ user }) {
             <label htmlFor="payment" className="text-sm">I set up my payment method</label>
           </div>
           {msg && <div className="text-sm text-blue-200/90">{msg}</div>}
-          <button className="px-5 py-3 rounded-lg bg-white text-black">Submit</button>
+          <AButton type="submit" className="px-5 py-3">Submit</AButton>
         </form>
       </div>
     </div>
@@ -516,7 +529,7 @@ function Forum() {
           <input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="Title" className="w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2 mb-3"/>
           <textarea value={form.content} onChange={e=>setForm({...form,content:e.target.value})} rows={3} placeholder="Share an idea or ask a question" className="w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
           <div className="mt-3 flex justify-end">
-            <button className="px-4 py-2 rounded-lg bg-white text-black">Post</button>
+            <AButton type="submit" className="px-4 py-2">Post</AButton>
           </div>
         </form>
         <div className="space-y-4">
@@ -528,9 +541,9 @@ function Forum() {
               </div>
               <p className="text-blue-200/90 text-sm mb-4 whitespace-pre-wrap line-clamp-3">{p.content}</p>
               <div className="flex items-center gap-3 text-sm">
-                <button onClick={()=>like(p.id)} className="px-3 py-1 rounded-md border border-blue-900/60">Like ({p.like_count||0})</button>
+                <AButton onClick={()=>like(p.id)} variant="outline" className="px-3 py-1">Like ({p.like_count||0})</AButton>
                 <span className="opacity-70">Views {p.views}</span>
-                <button onClick={()=>del(p.id)} className="ml-auto text-red-400">Delete</button>
+                <AButton onClick={()=>del(p.id)} variant="outline" className="ml-auto text-red-300 px-3 py-1">Delete</AButton>
               </div>
             </div>
           ))}
@@ -577,7 +590,7 @@ function ForumPost() {
           </div>
           <div className="mt-4 flex gap-2">
             <input value={content} onChange={e=>setContent(e.target.value)} placeholder="Write a reply" className="flex-1 bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
-            <button onClick={addReply} className="px-4 py-2 rounded-lg bg-white text-black">Reply</button>
+            <AButton onClick={addReply} className="px-4 py-2">Reply</AButton>
           </div>
         </div>
       </div>
@@ -600,7 +613,7 @@ function Privacy() {
   const [open, setOpen] = useState({p1:false,p2:false,p3:false})
   const Item = ({ id, title, children }) => (
     <div className="border border-blue-900/50 rounded-xl mb-3">
-      <button onClick={()=>setOpen(o=>({...o,[id]:!o[id]}))} className="w-full text-left px-4 py-3">{title}</button>
+      <AButton onClick={()=>setOpen(o=>({...o,[id]:!o[id]}))} variant="ghost" className="w-full text-left px-4 py-3">{title}</AButton>
       {open[id] && <div className="px-4 pb-4 text-blue-200/80 text-sm">{children}</div>}
     </div>
   )
@@ -687,8 +700,8 @@ function SettingsPage() {
               </div>
             ))}
             <div className="flex gap-3">
-              <button onClick={()=>setDocs(d=>[...d,{ type:'passport', url:'' }])} className="px-3 py-2 rounded-lg border border-blue-900/60">Add Document</button>
-              <button onClick={submitKYC} className="px-3 py-2 rounded-lg bg-white text-black">Submit KYC</button>
+              <AButton onClick={()=>setDocs(d=>[...d,{ type:'passport', url:'' }])} variant="outline" className="px-3 py-2">Add Document</AButton>
+              <AButton onClick={submitKYC} className="px-3 py-2">Submit KYC</AButton>
             </div>
           </div>
         </div>
@@ -704,7 +717,7 @@ function SettingsPage() {
             <input value={newPM.details.brand||''} onChange={e=>setNewPM(pm=>({...pm, details:{...pm.details, brand:e.target.value}}))} placeholder="Brand/Bank" className="bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
             <input value={newPM.details.last4||''} onChange={e=>setNewPM(pm=>({...pm, details:{...pm.details, last4:e.target.value}}))} placeholder="Last4/Hint" className="bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
           </div>
-          <button onClick={addMethod} className="px-3 py-2 rounded-lg bg-white text-black">Add</button>
+          <AButton onClick={addMethod} className="px-3 py-2">Add</AButton>
           <div className="mt-4 space-y-2">
             {methods.map(m=> (
               <div key={m.id} className="flex items-center gap-3 border border-blue-900/50 rounded-xl p-3">
@@ -712,8 +725,8 @@ function SettingsPage() {
                   <div className="text-white/90 text-sm">{m.type.toUpperCase()} • {(m.details?.brand||'')}{m.details?.last4? ` • ${m.details.last4}`:''}</div>
                   <div className="text-xs text-blue-200/70">{m.confirmed? 'Confirmed':'Unconfirmed'}</div>
                 </div>
-                {!m.confirmed && <button onClick={()=>confirmPM(m.id)} className="px-2 py-1 text-xs rounded-md border border-blue-900/60 flex items-center gap-1"><Check size={14}/>Confirm</button>}
-                <button onClick={()=>deletePM(m.id)} className="px-2 py-1 text-xs rounded-md border border-blue-900/60 text-red-300 flex items-center gap-1"><Trash2 size={14}/>Delete</button>
+                {!m.confirmed && <AButton onClick={()=>confirmPM(m.id)} variant="outline" className="px-2 py-1 text-xs"><Check size={14}/>Confirm</AButton>}
+                <AButton onClick={()=>deletePM(m.id)} variant="outline" className="px-2 py-1 text-xs text-red-300"><Trash2 size={14}/>Delete</AButton>
               </div>
             ))}
             {methods.length===0 && <div className="text-sm text-blue-200/70">No payment methods yet.</div>}
@@ -758,7 +771,7 @@ function LearnerDetail({ user }){
           </div>
         </div>
         <div className="flex gap-3">
-          <button onClick={()=>setShowInvest(true)} className="px-5 py-3 rounded-lg bg-white text-black">Invest Now</button>
+          <AButton onClick={()=>setShowInvest(true)} className="px-5 py-3">Invest Now</AButton>
           <div className="px-5 py-3 rounded-lg border border-blue-900/60">Model: {data.return_model}</div>
         </div>
       </div>
