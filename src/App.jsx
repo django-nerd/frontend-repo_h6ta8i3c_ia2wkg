@@ -138,6 +138,9 @@ function AgeGate() {
           <button onClick={()=>setVisible(false)} className="px-4 py-2 rounded-md border border-blue-900/60">Close</button>
           <button disabled={!canEnter} onClick={()=>{localStorage.setItem('invested:age_verified','1'); setVisible(false)}} className={`px-4 py-2 rounded-md ${canEnter? 'bg-white text-black':'bg-gray-600 text-gray-300 cursor-not-allowed'}`}>Enter</button>
         </div>
+        <div className="mt-3 text-xs text-blue-200/70 text-center">
+          Having trouble clicking elsewhere? Complete this check to unlock the app.
+        </div>
       </div>
     </div>
   )
@@ -146,8 +149,8 @@ function AgeGate() {
 function Hero() {
   return (
     <section className="relative min-h[80vh] sm:min-h-[80vh] flex items-center">
-      <div className="absolute inset-0">
-        <Spline scene="https://prod.spline.design/41MGRk-UDPKO-l6W/scene.splinecode" style={{ width: '100%', height: '100%' }} />
+      <div className="absolute inset-0 pointer-events-none">
+        <Spline scene="https://prod.spline.design/41MGRk-UDPKO-l6W/scene.splinecode" style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
       </div>
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-24 text-white">
         <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight mb-4">Invest in Human Potential</h1>
