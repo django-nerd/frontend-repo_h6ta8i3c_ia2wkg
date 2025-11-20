@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Routes, Route, Link, useLocation, Navigate, useParams, useNavigate } from 'react-router-dom'
 import { Menu, LogOut, LogIn, PlusCircle, Search, TrendingUp, MessageSquare, Shield, Settings, BadgeDollarSign, Video, Bell, FileText } from 'lucide-react'
+import Spline from '@splinetool/react-spline'
 
 // Utils
 const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
@@ -123,19 +124,29 @@ function Navbar({ user, onLogout }) {
 }
 
 function Hero() {
+  const splineUrl = import.meta.env.VITE_SPLINE_SCENE_URL || ''
   return (
     <section className="relative sm:min-h-[70vh] flex items-center overflow-hidden">
-      {/* Moving background (animated gradient + floating orbs) */}
-      <style>{`
-        @keyframes gradientShift { 0%{ transform: translate3d(0,0,0) scale(1);} 50%{ transform: translate3d(10%, -5%, 0) scale(1.1);} 100%{ transform: translate3d(0,0,0) scale(1);} }
-        @keyframes floaty { 0%{ transform: translateY(0) } 50%{ transform: translateY(-20px) } 100%{ transform: translateY(0) } }
-      `}</style>
-      <div className="absolute inset-0 -z-10 pointer-events-none">
-        <div className="absolute -top-32 -right-24 w-[36rem] h-[36rem] rounded-full blur-3xl" style={{ background:'radial-gradient(circle at 30% 30%, rgba(59,130,246,0.35), transparent 60%)', animation:'gradientShift 12s ease-in-out infinite' }}></div>
-        <div className="absolute -bottom-32 -left-24 w-[32rem] h-[32rem] rounded-full blur-3xl" style={{ background:'radial-gradient(circle at 70% 70%, rgba(99,102,241,0.35), transparent 60%)', animation:'gradientShift 14s ease-in-out infinite reverse' }}></div>
-        <div className="absolute left-1/3 top-10 w-40 h-40 rounded-full bg-blue-500/20 blur-xl" style={{ animation:'floaty 8s ease-in-out infinite' }}></div>
-        <div className="absolute right-1/4 bottom-10 w-28 h-28 rounded-full bg-cyan-400/20 blur-xl" style={{ animation:'floaty 10s ease-in-out infinite 1s' }}></div>
-      </div>
+      {/* Background layer: Spline if provided, else animated gradients */}
+      {splineUrl ? (
+        <div className="absolute inset-0 -z-10 pointer-events-none">
+          <Spline scene={splineUrl} />
+        </div>
+      ) : (
+        <>
+          <style>{`
+            @keyframes gradientShift { 0%{ transform: translate3d(0,0,0) scale(1);} 50%{ transform: translate3d(10%, -5%, 0) scale(1.1);} 100%{ transform: translate3d(0,0,0) scale(1);} }
+            @keyframes floaty { 0%{ transform: translateY(0) } 50%{ transform: translateY(-20px) } 100%{ transform: translateY(0) } }
+          `}</style>
+          <div className="absolute inset-0 -z-10 pointer-events-none">
+            <div className="absolute -top-32 -right-24 w-[36rem] h-[36rem] rounded-full blur-3xl" style={{ background:'radial-gradient(circle at 30% 30%, rgba(59,130,246,0.35), transparent 60%)', animation:'gradientShift 12s ease-in-out infinite' }}></div>
+            <div className="absolute -bottom-32 -left-24 w-[32rem] h-[32rem] rounded-full blur-3xl" style={{ background:'radial-gradient(circle at 70% 70%, rgba(99,102,241,0.35), transparent 60%)', animation:'gradientShift 14s ease-in-out infinite reverse' }}></div>
+            <div className="absolute left-1/3 top-10 w-40 h-40 rounded-full bg-blue-500/20 blur-xl" style={{ animation:'floaty 8s ease-in-out infinite' }}></div>
+            <div className="absolute right-1/4 bottom-10 w-28 h-28 rounded-full bg-cyan-400/20 blur-xl" style={{ animation:'floaty 10s ease-in-out infinite 1s' }}></div>
+          </div>
+        </>
+      )}
+      {/* Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-24 text-white">
         <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight mb-4">Invest in Human Potential</h1>
         <p className="text-blue-200/90 max-w-xl mb-8">Sponsor learners and creatives in exchange for a share of future income, project revenue, or success bonuses.</p>
@@ -145,6 +156,7 @@ function Hero() {
           <Link to="/demo" className="px-5 py-3 rounded-lg border border-blue-300/20">Get Started Now</Link>
         </div>
       </div>
+      {/* Dark overlay for contrast and ensure clicks pass through */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/90"></div>
     </section>
   )
