@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Routes, Route, Link, useLocation, Navigate, useParams, useNavigate } from 'react-router-dom'
+import { Routes, Route, Link, useLocation, Navigate, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { Menu, User, LogOut, LogIn, PlusCircle, Search, TrendingUp, MessageSquare, Shield, Settings, BadgeDollarSign, Video, Bell, CreditCard, Trash2, Check, FileText } from 'lucide-react'
 import Spline from '@splinetool/react-spline'
 
@@ -36,6 +36,39 @@ function useAuth() {
 function ResetScroll() {
   const location = useLocation()
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }) }, [location.pathname])
+  return null
+}
+
+// Global interceptor to make all buttons and top headings navigate to new pages
+function ClickInterceptor(){
+  const navigate = useNavigate()
+  useEffect(()=>{
+    const handler = (e)=>{
+      const target = e.target
+      if (!target) return
+      // Ignore if a link is clicked
+      const a = target.closest('a')
+      if (a) return
+      // Headings
+      const heading = target.closest('h1, h2, h3')
+      if (heading){
+        const text = heading.textContent || 'Heading'
+        e.preventDefault(); e.stopPropagation()
+        navigate(`/go/heading?text=${encodeURIComponent(text)}`)
+        return
+      }
+      // Buttons
+      const btn = target.closest('button')
+      if (btn){
+        const label = (btn.textContent || 'Button').trim()
+        e.preventDefault(); e.stopPropagation()
+        navigate(`/go/button?label=${encodeURIComponent(label)}`)
+        return
+      }
+    }
+    document.addEventListener('click', handler, true)
+    return ()=> document.removeEventListener('click', handler, true)
+  },[navigate])
   return null
 }
 
@@ -81,12 +114,13 @@ function Navbar({ user, onLogout }) {
           <Link to="/forum" className="hover:text-blue-300 flex items-center gap-2"><MessageSquare size={16}/>Community</Link>
           <Link to="/dashboard" className="hover:text-blue-300 flex items-center gap-2"><TrendingUp size={16}/>Dashboard</Link>
           <Link to="/about" className="hover:text-blue-300">About</Link>
+          <Link to="/contact" className="hover:text-blue-300">Contact</Link>
         </nav>
         <div className="flex items-center gap-3">
           {user ? (
             <div className="flex items-center gap-3">
               <Link to="/settings" className="p-2 rounded-lg hover:bg-blue-900/30"><Settings size={18}/></Link>
-              <button onClick={onLogout} className="px-3 py-1.5 rounded-md bg-white text-black text-sm flex items-center gap-2"><LogOut size={16}/>Logout</button>
+              <Link to="/logout" className="px-3 py-1.5 rounded-md bg-white text-black text-sm flex items-center gap-2"><LogOut size={16}/>Logout</Link>
               <Link to="/profile" className="flex items-center gap-2">
                 <LetterAvatar name={user.name} />
                 <span className="hidden sm:block text-sm opacity-80">{user.name}</span>
@@ -105,6 +139,7 @@ function Navbar({ user, onLogout }) {
           <Link onClick={()=>setOpen(false)} to="/forum" className="block py-2">Community</Link>
           <Link onClick={()=>setOpen(false)} to="/dashboard" className="block py-2">Dashboard</Link>
           <Link onClick={()=>setOpen(false)} to="/about" className="block py-2">About</Link>
+          <Link onClick={()=>setOpen(false)} to="/contact" className="block py-2">Contact</Link>
         </div>
       )}
     </header>
@@ -115,6 +150,7 @@ function AgeGate() {
   const [age, setAge] = useState(18)
   const [role, setRole] = useState('investor')
   const [visible, setVisible] = useState(() => !localStorage.getItem('invested:age_verified'))
+  const navigate = useNavigate()
   if (!visible) return null
 
   const canEnter = role === 'investor' ? age >= 18 : age >= 3
@@ -125,8 +161,8 @@ function AgeGate() {
         <h3 className="text-2xl font-semibold mb-2">Age Verification</h3>
         <p className="text-blue-200/80 mb-6">Confirm your age to continue. Investors must be 18+.</p>
         <div className="flex gap-3 mb-4">
-          <button onClick={()=>setRole('learner')} className={`flex-1 py-2 rounded-lg border ${role==='learner'?'bg-blue-600 text-white border-blue-500':'border-blue-900/60 bg-slate-900'}`}>I want to learn</button>
-          <button onClick={()=>setRole('investor')} className={`flex-1 py-2 rounded-lg border ${role==='investor'?'bg-blue-600 text-white border-blue-500':'border-blue-900/60 bg-slate-900'}`}>I want to invest</button>
+          <button onClick={()=>{setRole('learner'); navigate('/age/role/learner')}} className={`flex-1 py-2 rounded-lg border ${role==='learner'? 'bg-blue-600 text-white border-blue-500':'border-blue-900/60 bg-slate-900'}`}>I want to learn</button>
+          <button onClick={()=>{setRole('investor'); navigate('/age/role/investor')}} className={`flex-1 py-2 rounded-lg border ${role==='investor'? 'bg-blue-600 text-white border-blue-500':'border-blue-900/60 bg-slate-900'}`}>I want to invest</button>
         </div>
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm opacity-80">Age: {age}</span>
@@ -135,8 +171,8 @@ function AgeGate() {
         <input type="range" min="3" max="100" value={age} onChange={(e)=>setAge(parseInt(e.target.value))} className="w-full accent-white" style={{ filter:'drop-shadow(0 0 2px black)'}}/>
         <p className={`mt-3 text-sm ${canEnter? 'text-green-400':'text-red-400'}`}>{canEnter? 'Access granted' : 'Unable to invest — must be 18+'}</p>
         <div className="mt-6 flex justify-end gap-3">
-          <button onClick={()=>setVisible(false)} className="px-4 py-2 rounded-md border border-blue-900/60">Close</button>
-          <button disabled={!canEnter} onClick={()=>{localStorage.setItem('invested:age_verified','1'); setVisible(false)}} className={`px-4 py-2 rounded-md ${canEnter? 'bg-white text-black':'bg-gray-600 text-gray-300 cursor-not-allowed'}`}>Enter</button>
+          <button onClick={()=>{setVisible(false); navigate('/age/close')}} className="px-4 py-2 rounded-md border border-blue-900/60">Close</button>
+          <button disabled={!canEnter} onClick={()=>{localStorage.setItem('invested:age_verified','1'); setVisible(false); navigate('/age/enter')}} className={`px-4 py-2 rounded-md ${canEnter? 'bg-white text-black':'bg-gray-600 text-gray-300 cursor-not-allowed'}`}>Enter</button>
         </div>
       </div>
     </div>
@@ -175,6 +211,10 @@ function Home() {
             <p className="text-blue-200/80 text-sm">Flexible return models tailored to your goals. Choose Impact, Profit or Hybrid tiers per investment.</p>
           </div>
         ))}
+      </section>
+      <section className="max-w-6xl mx-auto px-4 pb-16">
+        <h2 className="text-2xl font-semibold mb-2">Contact Us</h2>
+        <p className="text-blue-200/80">Email: <a className="underline" href="mailto:rbahar2010@gmail.com">rbahar2010@gmail.com</a></p>
       </section>
     </div>
   )
@@ -236,7 +276,6 @@ function AuthPage({ auth }) {
 function ExplorePage({ user }) {
   const [list, setList] = useState([])
   const [q, setQ] = useState('')
-  const [selected, setSelected] = useState(null)
   const load = async()=>{
     const res = await fetch(`${API_BASE}/learners/explore${q?`?q=${encodeURIComponent(q)}`:''}`)
     const data = await res.json(); setList(data.learners)
@@ -250,7 +289,7 @@ function ExplorePage({ user }) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/70" size={18}/>
             <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search learners, skills" className="w-full bg-black border border-blue-900/60 rounded-lg pl-9 pr-3 py-2"/>
           </div>
-          <button onClick={load} className="px-4 py-2 rounded-lg bg-white text-black">Search</button>
+          <Link to={`/search?q=${encodeURIComponent(q)}`} className="px-4 py-2 rounded-lg bg-white text-black">Search</Link>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {list.map(l=>{
@@ -276,7 +315,7 @@ function ExplorePage({ user }) {
                   </div>
                 </div>
                 <div className="mt-auto flex gap-2">
-                  <button onClick={()=>setSelected(l)} className="flex-1 py-2 rounded-lg bg-white text-black">Invest Now</button>
+                  <Link to={`/invest/${l.id}`} className="flex-1 py-2 rounded-lg bg-white text-black text-center">Invest Now</Link>
                   <Link to={`/learner/${l.id}`} className="px-4 py-2 rounded-lg border border-blue-900/60">Review</Link>
                 </div>
               </div>
@@ -284,60 +323,31 @@ function ExplorePage({ user }) {
           })}
         </div>
       </div>
-      {selected && <InvestModal learner={selected} onClose={()=>setSelected(null)} user={user} onDone={()=>{ setSelected(null); load() }} />}
     </div>
   )
 }
 
-function InvestModal({ learner, onClose, user, onDone }) {
-  const [amount, setAmount] = useState('')
-  const [model, setModel] = useState('ISA')
-  const [confirming, setConfirming] = useState(false)
+function InvestPage(){
+  const { id } = useParams()
+  const [learner, setLearner] = useState(null)
+  const user = useMemo(()=>JSON.parse(localStorage.getItem('invested:user')||'null'),[])
+  useEffect(()=>{
+    const load = async()=>{
+      const r = await fetch(`${API_BASE}/learners/${id}`)
+      if(r.ok){ const d = await r.json(); setLearner(d.learner) }
+    }
+    load()
+  },[id])
+  if(!learner) return <div className="bg-black text-white p-8">Loading...</div>
   const remaining = Math.max(0, (learner.requested_funding||0) - (learner.funded_amount||0))
-
-  const submit = async ()=>{
-    setConfirming(false)
-    const res = await fetch(`${API_BASE}/investments`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ investor_id: user?.id || 'guest', learner_id: learner.id, amount: parseFloat(amount), model }) })
-    if(!res.ok){ alert((await res.json()).detail || 'Error'); return }
-    await res.json(); onDone()
-  }
-
+  const pct = Math.min(100, Math.round(((learner.funded_amount||0)/(learner.requested_funding||1))*100))
   return (
-    <div className="fixed inset-0 z-[70] bg-black/70 flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl border border-blue-900/60 bg-gradient-to-b from-slate-900 to-black p-6 text-white">
-        <h3 className="text-xl font-semibold mb-2">Invest in {learner.name}</h3>
-        <p className="text-sm text-blue-200/80 mb-4">Choose amount and model. This action cannot be undone.</p>
-        <div className="mb-3">
-          <label className="text-sm opacity-80">Amount (max ${remaining.toFixed(2)})</label>
-          <input value={amount} onChange={e=>setAmount(e.target.value)} type="number" min="1" step="0.01" className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
-        </div>
-        <div className="mb-4">
-          <label className="text-sm opacity-80">Return Model</label>
-          <select value={model} onChange={e=>setModel(e.target.value)} className="mt-1 w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2">
-            <option>ISA</option>
-            <option>Revenue</option>
-            <option>Bonus</option>
-            <option>Hybrid</option>
-          </select>
-        </div>
-        <div className="flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg border border-blue-900/60">Cancel</button>
-          <button onClick={()=>setConfirming(true)} className="px-4 py-2 rounded-lg bg-white text-black">Review & Confirm</button>
-        </div>
+    <div className="bg-black text-white min-h-[70vh]">
+      <div className="max-w-xl mx-auto px-4 py-10">
+        <h2 className="text-2xl font-semibold mb-2">Invest in {learner.name}</h2>
+        <div className="text-sm text-blue-200/80 mb-4">Remaining ${remaining.toFixed(2)} • {pct}% funded</div>
+        <Link to={`/invest/${id}/confirm`} className="px-5 py-3 rounded-lg bg-white text-black inline-block">Proceed to Confirmation</Link>
       </div>
-      {confirming && (
-        <div className="fixed inset-0 z-[80] bg-black/70 flex items-center justify-center p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-blue-900/60 bg-gradient-to-b from-slate-900 to-black p-6 text-white text-center">
-            <Shield className="mx-auto mb-3 text-blue-400"/>
-            <h4 className="font-semibold mb-2">Are you sure?</h4>
-            <p className="text-sm text-blue-200/80 mb-4">This cannot be undone.</p>
-            <div className="flex justify-center gap-3">
-              <button onClick={()=>setConfirming(false)} className="px-4 py-2 rounded-lg border border-blue-900/60">Back</button>
-              <button onClick={submit} className="px-4 py-2 rounded-lg bg-white text-black">Confirm</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -417,7 +427,7 @@ function ApplyPage({ user }) {
             <label htmlFor="payment" className="text-sm">I set up my payment method</label>
           </div>
           {msg && <div className="text-sm text-blue-200/90">{msg}</div>}
-          <button className="px-5 py-3 rounded-lg bg-white text-black">Submit</button>
+          <Link to="/apply/submit" className="px-5 py-3 rounded-lg bg-white text-black inline-block">Submit</Link>
         </form>
       </div>
     </div>
@@ -488,17 +498,11 @@ function Forum() {
     const data = await res.json(); setPosts(data.posts)
   }
   useEffect(()=>{ load() },[])
-  const submit = async(e)=>{
-    e.preventDefault(); if(!user){ alert('Login to post'); return }
-    const res = await fetch(`${API_BASE}/forum/posts`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ author_id: user.id, title: form.title, content: form.content })})
-    if(res.ok){ setForm({title:'',content:''}); load() }
-  }
   const like = async(id)=>{
     await fetch(`${API_BASE}/forum/posts/${id}/like?user_id=${encodeURIComponent(user?.id||'guest')}`, { method:'POST' })
     load()
   }
   const del = async(id)=>{
-    if(!confirm('Delete this post?')) return
     await fetch(`${API_BASE}/forum/posts/${id}`, { method:'DELETE' })
     load()
   }
@@ -509,11 +513,11 @@ function Forum() {
           <h2 className="text-2xl font-semibold">Community Forum</h2>
           <Link to="/forum/new" className="text-sm px-3 py-1.5 rounded-md bg-white text-black">New Post</Link>
         </div>
-        <form onSubmit={submit} className="rounded-2xl border border-blue-900/50 bg-gradient-to-b from-slate-900 to-black p-4 mb-6">
+        <form className="rounded-2xl border border-blue-900/50 bg-gradient-to-b from-slate-900 to-black p-4 mb-6">
           <input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="Title" className="w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2 mb-3"/>
           <textarea value={form.content} onChange={e=>setForm({...form,content:e.target.value})} rows={3} placeholder="Share an idea or ask a question" className="w-full bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
           <div className="mt-3 flex justify-end">
-            <button className="px-4 py-2 rounded-lg bg-white text-black">Post</button>
+            <Link to="/forum/submit" className="px-4 py-2 rounded-lg bg-white text-black">Post</Link>
           </div>
         </form>
         <div className="space-y-4">
@@ -525,9 +529,9 @@ function Forum() {
               </div>
               <p className="text-blue-200/90 text-sm mb-4 whitespace-pre-wrap line-clamp-3">{p.content}</p>
               <div className="flex items-center gap-3 text-sm">
-                <button onClick={()=>like(p.id)} className="px-3 py-1 rounded-md border border-blue-900/60">Like ({p.like_count||0})</button>
+                <Link to={`/forum/like/${p.id}`} className="px-3 py-1 rounded-md border border-blue-900/60">Like ({p.like_count||0})</Link>
                 <span className="opacity-70">Views {p.views}</span>
-                <button onClick={()=>del(p.id)} className="ml-auto text-red-400">Delete</button>
+                <Link to={`/forum/delete/${p.id}`} className="ml-auto text-red-400">Delete</Link>
               </div>
             </div>
           ))}
@@ -548,11 +552,6 @@ function ForumPost() {
     if(r.ok){ const d = await r.json(); setPost(d.post); setReplies(d.replies) }
   }
   useEffect(()=>{ load() },[id])
-  const addReply = async()=>{
-    if(!user){ alert('Login to reply'); return }
-    const r = await fetch(`${API_BASE}/forum/posts/${id}/replies`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ author_id: user.id, content }) })
-    if(r.ok){ setContent(''); load() }
-  }
   if(!post) return <div className="bg-black text-white p-8">Loading...</div>
   return (
     <div className="bg-black text-white min-h-[70vh]">
@@ -574,7 +573,7 @@ function ForumPost() {
           </div>
           <div className="mt-4 flex gap-2">
             <input value={content} onChange={e=>setContent(e.target.value)} placeholder="Write a reply" className="flex-1 bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
-            <button onClick={addReply} className="px-4 py-2 rounded-lg bg-white text-black">Reply</button>
+            <Link to={`/forum/${id}/reply`} className="px-4 py-2 rounded-lg bg-white text-black">Reply</Link>
           </div>
         </div>
       </div>
@@ -618,7 +617,7 @@ function Contact() {
     <div className="bg-black text-white">
       <div className="max-w-3xl mx-auto px-4 py-16">
         <h2 className="text-3xl font-semibold mb-4">Contact Us</h2>
-        <p className="text-blue-200/80 mb-2">Email: rbahar2010@gmail.com</p>
+        <p className="text-blue-200/80 mb-2">Email: <a className="underline" href="mailto:rbahar2010@gmail.com">rbahar2010@gmail.com</a></p>
       </div>
     </div>
   )
@@ -649,23 +648,6 @@ function SettingsPage() {
   }
   useEffect(()=>{ loadPM() },[])
 
-  const submitKYC = async()=>{
-    if(!user){ alert('Login required'); return }
-    const r = await fetch(`${API_BASE}/kyc/submit/${user.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ documents: docs }) })
-    if(r.ok) alert('KYC submitted')
-  }
-  const addMethod = async()=>{
-    if(!user){ alert('Login required'); return }
-    const r = await fetch(`${API_BASE}/payments/methods`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ user_id: user.id, ...newPM }) })
-    if(r.ok){ setNewPM({ type:'card', details:{ number:'', brand:'', last4:'' }}); loadPM() }
-  }
-  const confirmPM = async(id)=>{
-    await fetch(`${API_BASE}/payments/methods/confirm/${id}`, { method:'POST' }); loadPM()
-  }
-  const deletePM = async(id)=>{
-    await fetch(`${API_BASE}/payments/methods/${id}`, { method:'DELETE' }); loadPM()
-  }
-
   return (
     <div className="bg-black text-white min-h-[60vh]">
       <div className="max-w-5xl mx-auto px-4 py-12 space-y-8">
@@ -684,8 +666,8 @@ function SettingsPage() {
               </div>
             ))}
             <div className="flex gap-3">
-              <button onClick={()=>setDocs(d=>[...d,{ type:'passport', url:'' }])} className="px-3 py-2 rounded-lg border border-blue-900/60">Add Document</button>
-              <button onClick={submitKYC} className="px-3 py-2 rounded-lg bg-white text-black">Submit KYC</button>
+              <Link to="/kyc/add-document" className="px-3 py-2 rounded-lg border border-blue-900/60">Add Document</Link>
+              <Link to="/kyc/submit" className="px-3 py-2 rounded-lg bg-white text-black">Submit KYC</Link>
             </div>
           </div>
         </div>
@@ -701,7 +683,7 @@ function SettingsPage() {
             <input value={newPM.details.brand||''} onChange={e=>setNewPM(pm=>({...pm, details:{...pm.details, brand:e.target.value}}))} placeholder="Brand/Bank" className="bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
             <input value={newPM.details.last4||''} onChange={e=>setNewPM(pm=>({...pm, details:{...pm.details, last4:e.target.value}}))} placeholder="Last4/Hint" className="bg-black border border-blue-900/60 rounded-lg px-3 py-2"/>
           </div>
-          <button onClick={addMethod} className="px-3 py-2 rounded-lg bg-white text-black">Add</button>
+          <Link to="/payments/add" className="px-3 py-2 rounded-lg bg-white text-black">Add</Link>
           <div className="mt-4 space-y-2">
             {methods.map(m=> (
               <div key={m.id} className="flex items-center gap-3 border border-blue-900/50 rounded-xl p-3">
@@ -709,8 +691,8 @@ function SettingsPage() {
                   <div className="text-white/90 text-sm">{m.type.toUpperCase()} • {(m.details?.brand||'')}{m.details?.last4? ` • ${m.details.last4}`:''}</div>
                   <div className="text-xs text-blue-200/70">{m.confirmed? 'Confirmed':'Unconfirmed'}</div>
                 </div>
-                {!m.confirmed && <button onClick={()=>confirmPM(m.id)} className="px-2 py-1 text-xs rounded-md border border-blue-900/60 flex items-center gap-1"><Check size={14}/>Confirm</button>}
-                <button onClick={()=>deletePM(m.id)} className="px-2 py-1 text-xs rounded-md border border-blue-900/60 text-red-300 flex items-center gap-1"><Trash2 size={14}/>Delete</button>
+                {!m.confirmed && <Link to={`/payments/confirm/${m.id}`} className="px-2 py-1 text-xs rounded-md border border-blue-900/60 flex items-center gap-1"><Check size={14}/>Confirm</Link>}
+                <Link to={`/payments/delete/${m.id}`} className="px-2 py-1 text-xs rounded-md border border-blue-900/60 text-red-300 flex items-center gap-1"><Trash2 size={14}/>Delete</Link>
               </div>
             ))}
             {methods.length===0 && <div className="text-sm text-blue-200/70">No payment methods yet.</div>}
@@ -724,7 +706,6 @@ function SettingsPage() {
 function LearnerDetail({ user }){
   const { id } = useParams()
   const [data, setData] = useState(null)
-  const [showInvest, setShowInvest] = useState(false)
   const n = useNavigate()
   const load = async()=>{
     const r = await fetch(`${API_BASE}/learners/${id}`)
@@ -755,11 +736,10 @@ function LearnerDetail({ user }){
           </div>
         </div>
         <div className="flex gap-3">
-          <button onClick={()=>setShowInvest(true)} className="px-5 py-3 rounded-lg bg-white text-black">Invest Now</button>
+          <Link to={`/invest/${data.id}`} className="px-5 py-3 rounded-lg bg-white text-black">Invest Now</Link>
           <div className="px-5 py-3 rounded-lg border border-blue-900/60">Model: {data.return_model}</div>
         </div>
       </div>
-      {showInvest && <InvestModal learner={data} onClose={()=>setShowInvest(false)} user={user} onDone={()=>{ setShowInvest(false); load() }} />}
     </div>
   )
 }
@@ -793,21 +773,56 @@ function Profile(){
   )
 }
 
+function GoButtonPage(){
+  const [params] = useSearchParams()
+  const label = params.get('label') || 'Button'
+  return (
+    <div className="bg-black text-white min-h-[60vh] flex items-center justify-center p-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold mb-2">Button Clicked</h2>
+        <p className="text-blue-200/80">You clicked: "{label}"</p>
+      </div>
+    </div>
+  )
+}
+
+function GoHeadingPage(){
+  const [params] = useSearchParams()
+  const text = params.get('text') || 'Heading'
+  return (
+    <div className="bg-black text-white min-h-[60vh] flex items-center justify-center p-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold mb-2">Heading Opened</h2>
+        <p className="text-blue-200/80">You opened: "{text}"</p>
+      </div>
+    </div>
+  )
+}
+
 export default function App(){
   const auth = useAuth()
   return (
     <div className="min-h-screen bg-black">
+      <ClickInterceptor />
       <AgeGate />
       <Navbar user={auth.user} onLogout={auth.logout} />
       <ResetScroll />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/auth" element={auth.user? <Navigate to="/"/> : <AuthPage auth={auth} />} />
+        <Route path="/logout" element={<GoButtonPage />} />
         <Route path="/explore" element={<ExplorePage user={auth.user} />} />
+        <Route path="/invest/:id" element={<InvestPage />} />
         <Route path="/apply" element={<ApplyPage user={auth.user} />} />
+        <Route path="/apply/submit" element={<GoButtonPage />} />
         <Route path="/dashboard" element={<Dashboard user={auth.user} />} />
         <Route path="/forum" element={<Forum />} />
+        <Route path="/forum/new" element={<GoButtonPage />} />
+        <Route path="/forum/submit" element={<GoButtonPage />} />
+        <Route path="/forum/like/:id" element={<GoButtonPage />} />
+        <Route path="/forum/delete/:id" element={<GoButtonPage />} />
         <Route path="/forum/:id" element={<ForumPost />} />
+        <Route path="/forum/:id/reply" element={<GoButtonPage />} />
         <Route path="/learner/:id" element={<LearnerDetail user={auth.user} />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<SettingsPage />} />
@@ -815,6 +830,17 @@ export default function App(){
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/demo" element={<Demo />} />
+        <Route path="/search" element={<GoButtonPage />} />
+        <Route path="/kyc/add-document" element={<GoButtonPage />} />
+        <Route path="/kyc/submit" element={<GoButtonPage />} />
+        <Route path="/payments/add" element={<GoButtonPage />} />
+        <Route path="/payments/confirm/:id" element={<GoButtonPage />} />
+        <Route path="/payments/delete/:id" element={<GoButtonPage />} />
+        <Route path="/go/button" element={<GoButtonPage />} />
+        <Route path="/go/heading" element={<GoHeadingPage />} />
+        <Route path="/age/role/:who" element={<GoHeadingPage />} />
+        <Route path="/age/enter" element={<GoButtonPage />} />
+        <Route path="/age/close" element={<GoButtonPage />} />
       </Routes>
       <footer className="border-t border-blue-900/40 text-blue-200/70 py-10 text-sm">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row gap-4 justify-between">
